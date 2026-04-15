@@ -1,0 +1,123 @@
+{
+  "info": {
+    "name": "User Management API",
+    "description": "Local NestJS API — import and set `baseUrl` if needed (default http://localhost:3000). After **Create user**, the collection saves `userId` for the other user requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "userId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "App",
+      "item": [
+        {
+          "name": "GET health / hello",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/",
+            "description": "Root endpoint from AppController."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "  try {",
+                  "    const json = pm.response.json();",
+                  "    if (json && json.id) {",
+                  "      pm.collectionVariables.set('userId', json.id);",
+                  "    }",
+                  "  } catch (e) {}",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jane.doe@example.com\",\n  \"name\": \"Jane Doe\"\n}"
+            },
+            "url": "{{baseUrl}}/users",
+            "description": "Creates a user. On success, stores `id` in collection variable `userId`."
+          },
+          "response": []
+        },
+        {
+          "name": "List users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"],
+              "query": [
+                { "key": "page", "value": "1", "description": "Page number (default 1)" },
+                { "key": "limit", "value": "20", "description": "Page size 1–100 (default 20)" },
+                { "key": "email", "value": "", "description": "Optional exact email filter", "disabled": true },
+                { "key": "search", "value": "", "description": "Optional name/email contains (case-insensitive)", "disabled": true }
+              ]
+            },
+            "description": "Paginated list. Enable `email` or `search` query params as needed."
+          },
+          "response": []
+        },
+        {
+          "name": "Get user by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/users/{{userId}}",
+            "description": "Requires `userId` (set automatically after Create user, or paste a cuid)."
+          },
+          "response": []
+        },
+        {
+          "name": "Update user",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Updated\"\n}"
+            },
+            "url": "{{baseUrl}}/users/{{userId}}",
+            "description": "At least one of `email` or `name`. Prisma id is cuid."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete user",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/users/{{userId}}",
+            "description": "Removes the user (cascade deletes their tasks per schema)."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
