@@ -1,12 +1,13 @@
 {
   "info": {
     "name": "User Management API",
-    "description": "Local NestJS API — import and set `baseUrl` if needed (default http://localhost:3000). After **Create user**, the collection saves `userId` for the other user requests.",
+    "description": "Local NestJS API — import and set `baseUrl` if needed (default http://localhost:3000). **Create user** saves `userId`; **Create project** saves `projectId` for follow-up requests.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:3000" },
-    { "key": "userId", "value": "" }
+    { "key": "userId", "value": "" },
+    { "key": "projectId", "value": "" }
   ],
   "item": [
     {
@@ -114,6 +115,100 @@
             "header": [],
             "url": "{{baseUrl}}/users/{{userId}}",
             "description": "Removes the user (cascade deletes their tasks per schema)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Projects",
+      "item": [
+        {
+          "name": "Create project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "  try {",
+                  "    const json = pm.response.json();",
+                  "    if (json && json.id) {",
+                  "      pm.collectionVariables.set('projectId', json.id);",
+                  "    }",
+                  "  } catch (e) {}",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Website redesign\",\n  \"description\": \"Q1 initiative\"\n}"
+            },
+            "url": "{{baseUrl}}/projects",
+            "description": "Creates a project. On success, stores `id` in collection variable `projectId`."
+          },
+          "response": []
+        },
+        {
+          "name": "List projects",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/projects?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"],
+              "query": [
+                { "key": "page", "value": "1", "description": "Page number (default 1)" },
+                { "key": "limit", "value": "20", "description": "Page size 1–100 (default 20)" },
+                { "key": "name", "value": "", "description": "Optional filter: name contains (case-insensitive)", "disabled": true }
+              ]
+            },
+            "description": "Paginated list. Enable `name` to filter by substring."
+          },
+          "response": []
+        },
+        {
+          "name": "Get project by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/projects/{{projectId}}",
+            "description": "Requires `projectId` (set after Create project, or paste a cuid)."
+          },
+          "response": []
+        },
+        {
+          "name": "Update project",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Website redesign v2\",\n  \"description\": null\n}"
+            },
+            "url": "{{baseUrl}}/projects/{{projectId}}",
+            "description": "At least one of `name` or `description`. Use `null` for description to clear it."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete project",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/projects/{{projectId}}",
+            "description": "Deletes the project (cascade deletes its tasks per schema)."
           },
           "response": []
         }

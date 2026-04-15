@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+Each endpoint and DTO should have a schema in a separate file using Zod
