@@ -1,13 +1,14 @@
 {
   "info": {
     "name": "User Management API",
-    "description": "Local NestJS API — import and set `baseUrl` if needed (default http://localhost:3000). **Create user** saves `userId`; **Create project** saves `projectId` for follow-up requests.",
+    "description": "Local NestJS API — import and set `baseUrl` if needed (default http://localhost:3000). **Create user** → `userId`; **Create project** → `projectId`; **Create task** → `taskId`. Run user + project creates before tasks (or paste cuids).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:3000" },
     { "key": "userId", "value": "" },
-    { "key": "projectId", "value": "" }
+    { "key": "projectId", "value": "" },
+    { "key": "taskId", "value": "" }
   ],
   "item": [
     {
@@ -209,6 +210,104 @@
             "header": [],
             "url": "{{baseUrl}}/projects/{{projectId}}",
             "description": "Deletes the project (cascade deletes its tasks per schema)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "Create task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "  try {",
+                  "    const json = pm.response.json();",
+                  "    if (json && json.id) {",
+                  "      pm.collectionVariables.set('taskId', json.id);",
+                  "    }",
+                  "  } catch (e) {}",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Design landing page\",\n  \"description\": \"Hero + CTA\",\n  \"status\": \"TODO\",\n  \"assigneeId\": \"{{userId}}\",\n  \"projectId\": \"{{projectId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/tasks",
+            "description": "Requires valid `userId` and `projectId` (collection vars after Create user / Create project). Optional: `status` (TODO|IN_PROGRESS|DONE), `completedAt` (ISO date)."
+          },
+          "response": []
+        },
+        {
+          "name": "List tasks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "assigneeId", "value": "", "description": "Filter by user cuid", "disabled": true },
+                { "key": "projectId", "value": "", "description": "Filter by project cuid", "disabled": true },
+                { "key": "status", "value": "", "description": "TODO | IN_PROGRESS | DONE", "disabled": true },
+                { "key": "completedFrom", "value": "", "description": "completedAt >= (ISO date)", "disabled": true },
+                { "key": "completedTo", "value": "", "description": "completedAt <= (ISO date)", "disabled": true }
+              ]
+            },
+            "description": "Paginated list with optional filters."
+          },
+          "response": []
+        },
+        {
+          "name": "Get task by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tasks/{{taskId}}",
+            "description": "Uses `taskId` from Create task or paste a cuid."
+          },
+          "response": []
+        },
+        {
+          "name": "Update task",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"DONE\"\n}"
+            },
+            "url": "{{baseUrl}}/tasks/{{taskId}}",
+            "description": "Partial update. Setting `status` to DONE sets `completedAt` if omitted; non-DONE clears it."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete task",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/tasks/{{taskId}}",
+            "description": "Deletes the task."
           },
           "response": []
         }
